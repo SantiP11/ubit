@@ -17,6 +17,19 @@ enum Sensor {
     Fuerza_Magnetica
 }
 
+let col = 0
+let row = 0
+let LedMatrix = pins.createBuffer(25);
+
+// Declare a 2D array for the matrix (rows are declared here)
+function getLedMatrix() {
+    for (let i = 0; i <= 24; i++) {
+        row = Math.floor(i / 5)
+        col = i % 5
+        LedMatrix.setNumber(NumberFormat.UInt8LE, i, led.point(row, col) ? 1 : 0);
+    }
+}
+
 /**
  * Custom blocks
  */
@@ -40,19 +53,111 @@ namespace UBit {
     }
 
     /**
+    * This is a block to connect the UBit to a  decided Wi-Fi
+    */
+    //% block="Conectarse a la red $WiFi con la contraseña $Pssw"
+    export function ConWiFi(WiFi: string, Pssw: string) {
+
+    }
+
+    /**
     * This is a block to enable/disable audio for icons
     */
     //% block="Habilitar iconos $yes"
     //% yes.shadow="toggleOnOff"
     export function Icon(yes: boolean) {
-
+        if(yes) {
+            loops.everyInterval(100, function () {
+                getLedMatrix()
+                pins.i2cWriteBuffer(7, LedMatrix, false);
+            })
+        }    
     }
 
     /**
     * This is a block to get information from a certain sensor from another micro:bit
     */
-    //% block="Utilizar el sensor de $yes por el canal $int"
-    export function ActSen(yes: Sensor, int: number) {
+    //% block="Utilizar el sensor de $yes por el canal $int, dimension $x y rotacion $y"
+    export function ActSen(yes: Sensor, int: number, x: Dimension, y: Rotation) {
+        radio.setGroup(int)
+        switch(yes){
+            case (0):{
+                radio.sendString("Temp")
+                control.waitMicros(200)
+                break;
+            } case (1): {
+                radio.sendString("Luz")
+                control.waitMicros(200)
+                break;
+            } case (2): {
+                radio.sendString("Sonido")
+                control.waitMicros(200)
+                break;
+            } case (3): {
+                switch(x){
+                    case(0):{
+                        radio.sendString("Accelx")
+                        control.waitMicros(200)
+                        break;
+                    } case (1): {
+                        radio.sendString("Accely")
+                        control.waitMicros(200)
+                        break;
+                    } case (2): {
+                        radio.sendString("Accelz")
+                        control.waitMicros(200)
+                        break;
+                    } case (3): {
+                        radio.sendString("AccelF")
+                        control.waitMicros(200)
+                        break;
+                    }
+                }
+                break;
+            } case (4): {
+                radio.sendString("Bru")
+                control.waitMicros(200)
+                break;
+            } case (5): {
+                switch (y) {
+                    case (0): {
+                        radio.sendString("Rot0")
+                        control.waitMicros(200)
+                        break;
+                    } case (1): {
+                        radio.sendString("Rot1")
+                        control.waitMicros(200)
+                        break;
+                    }
+                }    
+                break;
+            } case (6): {
+                radio.sendString("Time")
+                control.waitMicros(200)
+                break;
+            } case (7): {
+                switch (x) {
+                    case (0): {
+                        radio.sendString("FMagx")
+                        control.waitMicros(200)
+                        break;
+                    } case (1): {
+                        radio.sendString("FMagy")
+                        control.waitMicros(200)
+                        break;
+                    } case (2): {
+                        radio.sendString("FMagz")
+                        control.waitMicros(200)
+                        break;
+                    } case (3): {
+                        radio.sendString("FMagF")
+                        control.waitMicros(200)
+                        break;
+                    }
+                }
+                break;
+            }
+        }
 
     }
 
@@ -61,15 +166,209 @@ namespace UBit {
     */
     //% block="Utilizar todos los sensores externos en el canal $int"
     export function ActAllSenExt(int: number) {
-
+        radio.setGroup(int)
+        radio.sendString("All")
+        control.waitMicros(200)
     }
 
     /**
     * This is a block to send information from all sensors to another micro:bit
     */
-    //% block="Enviar datos de sensores por el canal $int"
+    //% block="Enviar datos de sensores por el canal $int a la UBit"
     export function SendAllSenInt(int: number) {
-
+        radio.setGroup(int)
+        radio.onReceivedString(function (receivedString) {
+            switch(receivedString){
+                case ("Temp"):{
+                    radio.sendValue("Temp", input.temperature())
+                    basic.showLeds(`
+                    . . . . .
+                    # # # # #
+                    . . # . .
+                    . . # . .
+                    . . # . .
+                    `)
+                    break;
+                } case ("Luz"): {
+                    radio.sendValue("Luz", input.temperature())
+                    basic.showLeds(`
+                    . . . . .
+                    . # . . .
+                    . # . . .
+                    . # . . .
+                    . # # # .
+                    `)
+                    break;
+                } case ("Sonido"):{
+                    radio.sendValue("Sonido", input.lightLevel())
+                    basic.showLeds(`
+                    . # # # #
+                    # . . . .
+                    . # # # .
+                    . . . . #
+                    # # # # #
+                    `)
+                    break;
+                } case ("Accelx"): {
+                    radio.sendValue("Accel", input.acceleration(0))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    . # . # .
+                    . # . # .
+                    `)
+                    break;
+                } case ("Accely"): {
+                    radio.sendValue("Accel", input.acceleration(1))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    . # . # .
+                    . # . # .
+                    `)
+                    break;
+                } case ("Accelz"): {
+                    radio.sendValue("Accel", input.acceleration(2))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    . # . # .
+                    . # . # .
+                    `)
+                    break;
+                } case ("AccelF"): {
+                    radio.sendValue("Accel", input.acceleration(3))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    . # . # .
+                    . # . # .
+                    `)
+                } case ("Bru"): {
+                    radio.sendValue("Bru", input.compassHeading())
+                    basic.showLeds(`
+                    . # . . .
+                    . # . . .
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    `)
+                    break;
+                } case ("Rot0"): {
+                    radio.sendValue("Rot", input.rotation(0))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    . # # . .
+                    . # . # .
+                    `)
+                    break;
+                } case ("Rot1"): {
+                    radio.sendValue("Rot", input.rotation(1))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . # .
+                    . # # # .
+                    . # # . .
+                    . # . # .
+                    `)
+                    break;
+                } case ("Time"): {
+                    radio.sendValue("Time", input.runningTime())
+                    basic.showLeds(`
+                    . . . . .
+                    . # . . .
+                    # # # . .
+                    . # . . .
+                    . # # # .
+                    `)
+                    break;
+                } case ("FMagx"): {
+                    radio.sendValue("FMag", input.magneticForce(0))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . . .
+                    . # # # .
+                    . # . . .
+                    . # . . .
+                    `)
+                    break;
+                } case ("FMagy"): {
+                    radio.sendValue("FMag", input.magneticForce(1))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . . .
+                    . # # # .
+                    . # . . .
+                    . # . . .
+                    `)
+                    break;
+                } case ("FMagz"): {
+                    radio.sendValue("FMag", input.magneticForce(2))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . . .
+                    . # # # .
+                    . # . . .
+                    . # . . .
+                    `)
+                    break;
+                } case ("FMagF"): {
+                    radio.sendValue("FMag", input.magneticForce(3))
+                    basic.showLeds(`
+                    . # # # .
+                    . # . . .
+                    . # # # .
+                    . # . . .
+                    . # . . .
+                    `)
+                    break;
+                } case ("All"): {
+                    radio.sendValue("Temp", input.temperature())
+                    control.waitMicros(200)
+                    radio.sendValue("Luz", input.temperature())
+                    control.waitMicros(200)
+                    radio.sendValue("Sonido", input.lightLevel())
+                    control.waitMicros(200)
+                    radio.sendValue("Accel", input.acceleration(0))
+                    control.waitMicros(200)
+                    radio.sendValue("Accel", input.acceleration(1))
+                    control.waitMicros(200)
+                    radio.sendValue("Accel", input.acceleration(2))
+                    control.waitMicros(200)
+                    radio.sendValue("Accel", input.acceleration(3))
+                    control.waitMicros(200)
+                    radio.sendValue("Bru", input.compassHeading())
+                    control.waitMicros(200)
+                    radio.sendValue("Rot", input.rotation(0))
+                    control.waitMicros(200)
+                    radio.sendValue("Rot", input.rotation(1))
+                    control.waitMicros(200)
+                    radio.sendValue("Time", input.runningTime())
+                    control.waitMicros(200)
+                    radio.sendValue("FMag", input.magneticForce(0))
+                    control.waitMicros(200)
+                    radio.sendValue("FMag", input.magneticForce(1))
+                    control.waitMicros(200)
+                    radio.sendValue("FMag", input.magneticForce(2))
+                    control.waitMicros(200)
+                    radio.sendValue("FMag", input.magneticForce(3))
+                    basic.showLeds(`
+                    # # # # #
+                    # # # # #
+                    # # # # #
+                    # # # # #
+                    # # # # #
+                    `)
+                    break;
+                }
+            }
+        })    
     }
 
 }
