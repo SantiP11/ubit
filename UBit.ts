@@ -19,6 +19,7 @@ enum Sensor {
 
 let col = 0
 let row = 0
+let str = ""
 let LedMatrix = pins.createBuffer(25);
 
 // Declare a 2D array for the matrix (rows are declared here)
@@ -28,6 +29,30 @@ function getLedMatrix() {
         col = i % 5
         LedMatrix.setNumber(NumberFormat.UInt8LE, i, led.point(row, col) ? 1 : 0);
     }
+}
+
+// Padding function
+function padEnd(message: string, length: number, char: string) {
+    while (message.length < length) {
+        message = "" + message + char
+    }
+    return message
+}
+
+//Sending a message to the UBit
+function sendBuffer(message: string) {
+    // Ensure the message is exactly 50 bytes
+    if (message.length > 50) {
+        message = message.slice(0, 50)
+    } else {
+        // Pad with spaces to 50 characters
+        message = padEnd(message, 50, " ")
+    }
+    let buffer2 = pins.createBuffer(50)
+    for (let i = 0; i <= 49; i++) {
+        buffer2.setNumber(NumberFormat.UInt8LE, i, message.charCodeAt(i))
+    }
+    pins.i2cWriteBuffer(7, buffer2, false)
 }
 
 /**
@@ -41,7 +66,7 @@ namespace UBit {
     */
     //% block="Reproducir $text por audio"
     export function RepText(text: string) {
-
+        sendBuffer(text)
     }
 
     /**
@@ -49,7 +74,9 @@ namespace UBit {
     */
     //% block="Reproducir $num por audio"
     export function RepNum(num: number) {
-
+        str = convertToText(num)
+        sendBuffer(str)
+        str = ""
     }
 
     /**
@@ -57,7 +84,9 @@ namespace UBit {
     */
     //% block="Conectarse a la red $WiFi con la contraseña $Pssw"
     export function ConWiFi(WiFi: string, Pssw: string) {
-
+        str = "?" + WiFi + "?" + Pssw + "?"
+        sendBuffer(str)
+        str = ""
     }
 
     /**
