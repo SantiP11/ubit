@@ -55,6 +55,7 @@ function sendBuffer(message: string) {
     pins.i2cWriteBuffer(7, buffer2, false)
 }
 
+
 /**
  * Custom blocks
  */
