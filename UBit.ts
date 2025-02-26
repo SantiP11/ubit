@@ -63,7 +63,7 @@ function sendBuffer(message: string) {
 namespace UBit {
 
     /**
-    * This is a block to reproduce a certain text through audio
+    * Reproduce el texto escrito por audio en la UBit.
     */
     //% block="Reproducir $text por audio"
     export function RepText(text: string) {
@@ -71,7 +71,7 @@ namespace UBit {
     }
 
     /**
-    * This is a block to reproduce a certain number through audio
+    * Reproduce el número escrito por audio en la UBit.
     */
     //% block="Reproducir $num por audio"
     export function RepNum(num: number) {
@@ -81,7 +81,8 @@ namespace UBit {
     }
 
     /**
-    * This is a block to connect the UBit to a  decided Wi-Fi
+    * Conecta la UBit a la red deseada. 
+    * En caso de no usar este bloque se conectara a la red de Ceibal.
     */
     //% block="Conectarse a la red $WiFi con la contraseña $Pssw"
     export function ConWiFi(WiFi: string, Pssw: string) {
@@ -91,7 +92,8 @@ namespace UBit {
     }
 
     /**
-    * This is a block to enable/disable audio for icons
+    * Habilita/deshabilita la salida por audio de lo 
+    * íconos vistos en el display de la micro:bit.
     */
     //% block="Habilitar iconos $yes"
     //% yes.shadow="toggleOnOff"
@@ -108,7 +110,8 @@ namespace UBit {
     }
 
     /**
-    * This is a block to get information from a certain sensor from another micro:bit
+    * Se escoge un sensor (y otro párametro de ser necesario) 
+    * y un canal de radio por el cual pedir los datos.
     */
     //% block="Utilizar el sensor de $yes por el canal $int, dimension $x y rotacion $y"
     export function ActSen(yes: Sensor, int: number, x: Dimension, y: Rotation) {
@@ -195,7 +198,8 @@ namespace UBit {
     }
 
     /**
-    * This is a block to get information from all sensors from another micro:bit
+    * Se escogen todos los sensores disponibles 
+    * y un canal de radio por el cual pedir los datos.
     */
     //% block="Utilizar todos los sensores externos en el canal $int"
     export function ActAllSenExt(int: number) {
@@ -205,7 +209,8 @@ namespace UBit {
     }
 
     /**
-    * This is a block to send information from all sensors to another micro:bit
+    * Se elige un canal de radio por el cual mandarle los 
+    * datos que pida la micro:bit conectada a la UBit.
     */
     //% block="Enviar datos de sensores por el canal $int a la UBit"
     export function SendAllSenInt(int: number) {
