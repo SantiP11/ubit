@@ -98,7 +98,10 @@ namespace UBit {
         if(yes) {
             loops.everyInterval(100, function () {
                 getLedMatrix()
-                pins.i2cWriteBuffer(7, LedMatrix, false);
+                str = convertToText(LedMatrix)
+                padEnd(str, 50, " ")
+                sendBuffer(str)
+                str = ""
             })
         }    
     }
