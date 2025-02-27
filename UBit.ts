@@ -17,6 +17,7 @@ enum Sensor {
     Fuerza_Magnetica
 }
 
+let BUFF_LEN = 50
 let col = 0
 let row = 0
 let str = ""
@@ -41,14 +42,14 @@ function padEnd(message: string, length: number, char: string) {
 
 //Sending a message to the UBit
 function sendBuffer(message: string) {
-    // Ensure the message is exactly 50 bytes
-    if (message.length > 50) {
-        message = message.slice(0, 50)
+    // Ensure the message is exactly BUFF_LEN bytes
+    if (message.length > BUFF_LEN) {
+        message = message.slice(0, BUFF_LEN)
     } else {
         // Pad with spaces to 50 characters
-        message = padEnd(message, 50, " ")
+        message = padEnd(message, BUFF_LEN, " ")
     }
-    let buffer2 = pins.createBuffer(50)
+    let buffer2 = pins.createBuffer(BUFF_LEN)
     for (let i = 0; i <= 49; i++) {
         buffer2.setNumber(NumberFormat.UInt8LE, i, message.charCodeAt(i))
     }
@@ -102,7 +103,7 @@ namespace UBit {
             loops.everyInterval(100, function () {
                 getLedMatrix()
                 str = convertToText(LedMatrix)
-                padEnd(str, 50, " ")
+                padEnd(str, BUFF_LEN, " ")
                 sendBuffer(str)
                 str = ""
             })
