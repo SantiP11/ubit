@@ -18,19 +18,14 @@ enum Sensor {
 }
 
 let BUFF_LEN = 50
+let I2C_TIME_INTERVAL = 5000
 let col = 0
 let row = 0
 let str = ""
-let LedMatrix = pins.createBuffer(25);
+
 
 // Declare a 2D array for the matrix (rows are declared here)
-function getLedMatrix() {
-    for (let i = 0; i <= 24; i++) {
-        row = Math.floor(i / 5)
-        col = i % 5
-        LedMatrix.setNumber(NumberFormat.UInt8LE, i, led.point(row, col) ? 1 : 0);
-    }
-}
+
 
 // Padding function
 function padEnd(message: string, length: number, char: string) {
@@ -40,7 +35,7 @@ function padEnd(message: string, length: number, char: string) {
     return message
 }
 
-//Sending a message to the UBit
+//Transforma el string a buffer, lo rellena y lo manda a la UBit
 function sendBuffer(message: string) {
     // Ensure the message is exactly BUFF_LEN bytes
     if (message.length > BUFF_LEN) {
@@ -55,6 +50,37 @@ function sendBuffer(message: string) {
     }
     pins.i2cWriteBuffer(7, buffer2, false)
 }
+
+// Transforma el string a buffer, lo rellena y lo manda a la UBit. 
+// Se asegura que el primer caracter sea # por ser un icono
+function sendIconBuffer() {
+    let LedMatrix = pins.createBuffer(25);
+    let buffer2 = pins.createBuffer(BUFF_LEN);
+    
+    for (let i = 0; i <= 24; i++) {
+        row = Math.floor(i / 5)
+        col = i % 5
+        LedMatrix.setNumber(NumberFormat.UInt8LE, i, led.point(row, col) ? 1 : 0);
+    }
+    
+    // Place '#' at the first position
+    buffer2.setNumber(NumberFormat.UInt8LE, 0, "#".charCodeAt(0));
+
+    // Copy the 25-byte matrixBuffer into buffer2, shifting to the right
+    for (let i = 0; i < 25; i++) {
+        buffer2.setNumber(NumberFormat.UInt8LE, i + 1, LedMatrix.getNumber(NumberFormat.UInt8LE, i));
+    }
+
+    // Fill the rest with spaces (ASCII 32)
+    for (let i = 26; i < BUFF_LEN; i++) {
+        buffer2.setNumber(NumberFormat.UInt8LE, i, " ".charCodeAt(0));
+    }
+
+    // Send the buffer via I2C
+    pins.i2cWriteBuffer(7, buffer2, false);
+}
+
+
 
 
 /**
@@ -96,15 +122,12 @@ namespace UBit {
     * Habilita/deshabilita la salida por audio de lo 
     * íconos vistos en el display de la micro:bit.
     */
-    //% block="Habilitar iconos $yes"
+    //% block="Activar iconos con audio $yes"
     //% yes.shadow="toggleOnOff"
     export function Icon(yes: boolean) {
         if(yes) {
-            loops.everyInterval(100, function () {
-                getLedMatrix()
-                str = convertToText(LedMatrix)
-                padEnd(str, BUFF_LEN, " ")
-                sendBuffer(str)
+            loops.everyInterval(I2C_TIME_INTERVAL, function () {
+                sendIconBuffer();
                 str = ""
             })
         }    
