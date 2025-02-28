@@ -18,7 +18,7 @@ enum Sensor {
 }
 
 let BUFF_LEN = 50
-let I2C_TIME_INTERVAL = 5000
+let I2C_TIME_INTERVAL = 150
 let col = 0
 let row = 0
 let str = ""
