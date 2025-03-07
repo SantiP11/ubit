@@ -18,10 +18,16 @@ enum Sensor {
 }
 
 let BUFF_LEN = 50
-let I2C_TIME_INTERVAL = 150
+let I2C_TIME_INTERVAL = 500
 let col = 0
 let row = 0
 let str = ""
+let StopI2CScreen = 0
+
+let newLedMatrix = pins.createBuffer(25);
+let lastLedMatrix = pins.createBuffer(25);
+
+
 
 
 // Declare a 2D array for the matrix (rows are declared here)
@@ -36,20 +42,53 @@ function padEnd(message: string, length: number, char: string) {
 }
 
 //Transforma el string a buffer, lo rellena y lo manda a la UBit
-function sendBuffer(message: string) {
-    // Ensure the message is exactly BUFF_LEN bytes
-    if (message.length > BUFF_LEN) {
-        message = message.slice(0, BUFF_LEN)
-    } else {
-        // Pad with spaces to 50 characters
-        message = padEnd(message, BUFF_LEN, " ")
+function sendWiFiBuffer(message1: string, message2: string) {
+    // Calculate available space for each message after adding '?'
+
+    // Construct the formatted message with '?' at positions
+    let finalMessage = "?" + message1 + "?" + message2 + "?";
+
+    // Pad the message to BUFF_LEN with spaces
+    finalMessage = padEnd(finalMessage, BUFF_LEN, " ");
+
+    // Create the buffer
+    let buffer2 = pins.createBuffer(BUFF_LEN);
+    for (let i = 0; i < BUFF_LEN; i++) {
+        buffer2.setNumber(NumberFormat.UInt8LE, i, finalMessage.charCodeAt(i));
     }
-    let buffer2 = pins.createBuffer(BUFF_LEN)
-    for (let i = 0; i <= 49; i++) {
-        buffer2.setNumber(NumberFormat.UInt8LE, i, message.charCodeAt(i))
-    }
-    pins.i2cWriteBuffer(7, buffer2, false)
+
+    // Send buffer via I2C
+    pins.i2cWriteBuffer(7, buffer2, false);
 }
+
+//Transforma el string a buffer, lo rellena y lo manda a la UBit
+function sendTextBuffer(message: string) {
+    // Ensure the message does not exceed BUFF_LEN - 1 to make space for '%'
+    if (message.length > BUFF_LEN - 1) {
+        message = message.slice(0, BUFF_LEN - 1);
+    }
+
+    // Add '%' at the start and shift the message
+    message = "%" + message + "%";
+
+    // Pad the message to BUFF_LEN with spaces
+    message = padEnd(message, BUFF_LEN, " ");
+
+    let buffer2 = pins.createBuffer(BUFF_LEN);
+    for (let i = 0; i < BUFF_LEN; i++) {
+        buffer2.setNumber(NumberFormat.UInt8LE, i, message.charCodeAt(i));
+    }
+
+    // Send buffer via I2C
+    pins.i2cWriteBuffer(7, buffer2, false);
+}
+
+function copyBuffer(original: Buffer): Buffer {
+    let copy = pins.createBuffer(original.length);
+    copy.write(0, original);
+    return copy;
+}
+
 
 // Transforma el string a buffer, lo rellena y lo manda a la UBit. 
 // Se asegura que el primer caracter sea # por ser un icono
@@ -62,7 +101,13 @@ function sendIconBuffer() {
         col = i % 5
         LedMatrix.setNumber(NumberFormat.UInt8LE, i, led.point(row, col) ? 1 : 0);
     }
+
+    if (!LedMatrix.equals(lastLedMatrix)) {
+        lastLedMatrix = copyBuffer(LedMatrix);
+        return;
+    }
     
+
     // Place '#' at the first position
     buffer2.setNumber(NumberFormat.UInt8LE, 0, "#".charCodeAt(0));
 
@@ -92,9 +137,10 @@ namespace UBit {
     /**
     * Reproduce el texto escrito por audio en la UBit.
     */
-    //% block="Reproducir $text por audio"
+    //% block="Mostrar cadena $text con audio"
     export function RepText(text: string) {
-        sendBuffer(text)
+        sendTextBuffer(text)
+        basic.showString(text)
     }
 
     /**
@@ -103,7 +149,9 @@ namespace UBit {
     //% block="Reproducir $num por audio"
     export function RepNum(num: number) {
         str = convertToText(num)
-        sendBuffer(str)
+        StopI2CScreen=1
+        sendTextBuffer(str)
+        StopI2CScreen = 0
         str = ""
     }
 
@@ -113,8 +161,9 @@ namespace UBit {
     */
     //% block="Conectarse a la red $WiFi con la contraseña $Pssw"
     export function ConWiFi(WiFi: string, Pssw: string) {
-        str = "?" + WiFi + "?" + Pssw + "?"
-        sendBuffer(str)
+        StopI2CScreen=1
+        sendWiFiBuffer(WiFi, Pssw)
+        StopI2CScreen = 0
         str = ""
     }
 
@@ -127,8 +176,8 @@ namespace UBit {
     export function Icon(yes: boolean) {
         if(yes) {
             loops.everyInterval(I2C_TIME_INTERVAL, function () {
+                if (StopI2CScreen == 0)
                 sendIconBuffer();
-                str = ""
             })
         }    
     }
