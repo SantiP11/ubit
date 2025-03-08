@@ -83,10 +83,42 @@ function sendTextBuffer(message: string) {
     pins.i2cWriteBuffer(7, buffer2, false);
 }
 
+//Transforma el string a buffer, lo rellena y lo manda a la UBit
+function sendNumBuffer(message: string) {
+    // Ensure the message does not exceed BUFF_LEN - 1 to make space for '%'
+    if (message.length > BUFF_LEN - 1) {
+        message = message.slice(0, BUFF_LEN - 1);
+    }
+
+    // Add '&' at the start and shift the message
+    message = "&" + message + "&";
+
+    // Pad the message to BUFF_LEN with spaces
+    message = padEnd(message, BUFF_LEN, " ");
+
+    let buffer2 = pins.createBuffer(BUFF_LEN);
+    for (let i = 0; i < BUFF_LEN; i++) {
+        buffer2.setNumber(NumberFormat.UInt8LE, i, message.charCodeAt(i));
+    }
+
+    // Send buffer via I2C
+    pins.i2cWriteBuffer(7, buffer2, false);
+}
+
 function copyBuffer(original: Buffer): Buffer {
     let copy = pins.createBuffer(original.length);
     copy.write(0, original);
     return copy;
+}
+
+function isAllZero(buffer: Buffer) {
+    // Recorre todo el buffer y devuelve 'true' si todos los valores son 0
+    for (let i = 0; i < buffer.length; i++) {
+        if (buffer[i] !== 0) {
+            return false; // Si encuentra un valor distinto de 0, retorna false
+        }
+    }
+    return true; // Si todos los valores son 0, retorna true
 }
 
 
@@ -102,7 +134,7 @@ function sendIconBuffer() {
         LedMatrix.setNumber(NumberFormat.UInt8LE, i, led.point(row, col) ? 1 : 0);
     }
 
-    if (!LedMatrix.equals(lastLedMatrix)) {
+    if (!LedMatrix.equals(lastLedMatrix) || isAllZero(LedMatrix)) {
         lastLedMatrix = copyBuffer(LedMatrix);
         return;
     }
@@ -135,24 +167,62 @@ function sendIconBuffer() {
 namespace UBit {
 
     /**
+     * Reproduce el texto o número por audio en la UBit y lo muestra en la pantalla.
+     */
+    //% block="Mostrar cadena $text con audio"
+    //% text.shadowOptions.toString=true
+    export function RepTextwithScreen(text: any) {
+        let textString = text.toString(); // Convierte cualquier entrada a cadena
+        StopI2CScreen = 1;
+        sendTextBuffer(textString);
+        basic.showString(textString);
+        StopI2CScreen = 0;
+    }
+
+
+
+    /**
     * Reproduce el texto escrito por audio en la UBit.
     */
-    //% block="Mostrar cadena $text con audio"
+    //% block="Reproducir $text por audio"
     export function RepText(text: string) {
+        StopI2CScreen = 1
         sendTextBuffer(text)
-        basic.showString(text)
+        StopI2CScreen = 0
     }
+
+    /*ME QUEDE ACAAAAAAAAAAAA , HAY QUE TESTEAR PARA ABAJO
 
     /**
     * Reproduce el número escrito por audio en la UBit.
     */
     //% block="Reproducir $num por audio"
     export function RepNum(num: number) {
-        str = convertToText(num)
-        StopI2CScreen=1
-        sendTextBuffer(str)
+        let textString = num.toString(); // Convierte cualquier entrada a cadena
+        StopI2CScreen = 1
+        if(num>=0 && num<=9){
+            sendNumBuffer(textString)
+        } else if (num>9){
+            sendTextBuffer(textString)
+        }
         StopI2CScreen = 0
-        str = ""
+    }
+
+    /**
+    * Reproduce el número escrito por audio en la UBit y muestra en pantalla.
+    */
+    //% block="Reproducir $num por audio"
+    export function RepNumwithScreen(num: number) {
+        let textString = num.toString(); // Convierte cualquier entrada a cadena
+        StopI2CScreen = 1
+        if (num >= 0 && num <= 9) {
+            sendNumBuffer(textString)
+        } else if (num > 9) {
+            StopI2CScreen = 1
+            sendTextBuffer(textString)
+            StopI2CScreen = 0
+        }
+        basic.showNumber(num);
     }
 
     /**
