@@ -211,7 +211,7 @@ namespace UBit {
     /**
     * Reproduce el número escrito por audio en la UBit y muestra en pantalla.
     */
-    //% block="Reproducir $num por audio"
+    //% block="Mostrar en pantalla $num y reproducir por audio"
     export function RepNumwithScreen(num: number) {
         let textString = num.toString(); // Convierte cualquier entrada a cadena
         StopI2CScreen = 1
