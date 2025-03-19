@@ -3,6 +3,7 @@
 * Utilice este archivo para definir funciones y bloques personalizados.
 * Lea más en https://makecode.microbit.org/blocks/custom
 */
+let waitTime = 1000;  // 5000 milliseconds = 5 seconds
 
 enum Sensor {
     Temperatura,
@@ -160,21 +161,36 @@ function sendIconBuffer() {
 }
 
 
+let ligFlag = false;
+let ligValue = 0;
 
+let temFlag = false;
+let temValue = 0;
+
+let souFlag = false;
+let souValue = 0;
+
+let dirFlag = false;
+let dirValue = 0;
 
 /**
  * Custom blocks
  */
 //% weight=100 color=#c845da icon="\uf29a"
 namespace UBit {
-
+    
     /**
     * Reproduce el texto o número por audio en la UBit y lo muestra en la pantalla.
     */
     //% block="Mostrar cadena $message con audio"
     //% message.shadow="text"
-    export function RepTextwithScreen(message: any) {
-        let textString = message.toString(); // Convert number to string if needed
+    export function RepTextwithScreen(message: string | number) {
+        let textString;
+        if (typeof message !== "string"){
+            textString = message.toString(); // Convert number to string if needed
+        } else {
+            textString = message;
+        }
         StopI2CScreen = 1;
         sendTextBuffer(textString);
         basic.showString(textString);
@@ -242,100 +258,96 @@ namespace UBit {
      * Get the temperature in Celsius from a specified micro:bit.
      * @param sensorNumber The radio group number to communicate with a micro:bit.
      */
-    //% block="temperatura (°C) desde micro:bit $sensorNumber"
-    export function getTemperature(sensorNumber: number): number {
+    //% block="temperatura (°C) desde micro:bit externa"
+    export function getTemperature(): number {
+        let startTime = input.runningTime();  // Get the current time in milliseconds
         let temperature: number = -1; // Default value indicating no data received
 
-        radio.setGroup(sensorNumber);
-        radio.sendString("Temp");
-
-        control.waitMicros(200); // Wait to ensure the temperature has been received
+        radio.sendString("Tem");
 
         // Wait for the temperature to be received
-        radio.onReceivedValue(function (name: string, value: number) {
-            if (name == "Tem") {
-                temperature = value; // Capture the temperature value
+        while (input.runningTime() - startTime < waitTime) {
+            if (ligFlag) {
+                temperature = temValue
+                ligFlag = false;
+                return temperature;
             }
-        });
+        }
 
-        return temperature;
+        return -1;
     }
 
     /**
  * Tomar el nivel de luz desde una microbit externa
- * @param sensorNumber The radio group number to communicate with a micro:bit.
  */
-    //% block="Nivel de luz desde micro:bit $sensorNumber"
-    export function getLight(sensorNumber: number): number {
+    //% block="Nivel de luz desde micro:bit externa"
+    export function getLight(): number {
+        let startTime = input.runningTime();  // Get the current time in milliseconds
         let light: number = -1; // Default value indicating no data received
 
-        radio.setGroup(sensorNumber);
         radio.sendString("Lig");
 
         // Wait for the temperature to be received
-        radio.onReceivedValue(function (name: string, value: number) {
-            if (name == "Lig") {
-                light = value; // Capture the temperature value
+        while (input.runningTime() - startTime < waitTime) {
+            if (ligFlag) {
+                light = ligValue
+                ligFlag = false;
+                return light;
             }
-        });
+        }
 
-        control.waitMicros(200); // Wait to ensure the temperature has been received
-
-        return light;
+        return -1;
     }
 
     /**
-* Tomar el nivel de sonido desde una microbit externa
-* @param sensorNumber The radio group number to communicate with a micro:bit.
-*/
-    //% block="Nivel de sonido desde micro:bit $sensorNumber"
-    export function getSound(sensorNumber: number): number {
+    * Tomar el nivel de sonido desde una microbit externa
+    */
+    //% block="Nivel de sonido desde micro:bit externa"
+    export function getSound(): number {
         let sound: number = -1; // Default value indicating no data received
+        let startTime = input.runningTime();  // Get the current time in milliseconds
 
-        radio.setGroup(sensorNumber);
         radio.sendString("Sou");
 
-        control.waitMicros(200); // Wait to ensure the temperature has been received
-
         // Wait for the temperature to be received
-        radio.onReceivedValue(function (name: string, value: number) {
-            if (name == "Sou") {
-                sound = value; // Capture the temperature value
+        while (input.runningTime() - startTime < waitTime) {
+            if (souFlag) {
+                sound = ligValue
+                souFlag = false;
+                return sound;
             }
-        });
+        }
 
-        return sound;
+        return -1;
     }
 
     /**
-* Tomar la dirección de la brujula desde una microbit externa
-* @param sensorNumber The radio group number to communicate with a micro:bit.
-*/
-    //% block="Dirección de la brujula de la micro:bit $sensorNumber"
-    export function getDirection(sensorNumber: number): number {
+    * Tomar la dirección de la brujula desde una microbit externa
+    */
+    //% block="Dirección de la brujula de la micro:bit "
+    export function getDirection(): number {
         let direction: number = -1; // Default value indicating no data received
+        let startTime = input.runningTime();  // Get the current time in milliseconds
 
-        radio.setGroup(sensorNumber);
         radio.sendString("Dir");
 
-        control.waitMicros(200); // Wait to ensure the temperature has been received
-
         // Wait for the temperature to be received
-        radio.onReceivedValue(function (name: string, value: number) {
-            if (name == "Dir") {
-                direction = value; // Capture the temperature value
+        while (input.runningTime() - startTime < waitTime) {
+            if (dirFlag) {
+                direction = ligValue
+                dirFlag = false;
+                return direction;
             }
-        });
+        }
 
-        return direction;
+        return -1;
     }
 
     /**
     * Detecta si el micro:bit está realizando un gesto y ejecuta una acción.
     */
-    //% block="si $gesture en micro:bit $sensorNumber"
-    export function onGestureDetect(sensorNumber: number, gesture: Gesture, handler: () => void): void {
-        radio.setGroup(sensorNumber); // Configura el grupo de radio con el número del sensor.
+    //% block="si $gesture en micro:bit externa"
+    export function onGestureDetect(gesture: Gesture, handler: () => void): void {
         radio.onReceivedValue(function (name: string, value: Gesture) {
             if (name == "Ges") {
                 if (value == gesture) { 
@@ -345,12 +357,37 @@ namespace UBit {
         });
     }
 
+    /**
+    * Usar sensores externos de micro:bit
+    */
+    //% block="Usar sensores de micro:bit externa $channel"
+    //% channel.min=1 channel.max=255
+    export function ExternalSensors(channel: number) {
+        radio.setGroup(channel);
+        radio.onReceivedValue(function (name, value) {
+            if (name == "Tem") {
+                temFlag = true;
+                temValue = value;
+            } else if (name == "Lig") {
+                ligFlag = true;
+                ligValue = value;
+            } else if (name == "Dir") {
+                dirFlag = true;
+                dirValue = value;
+            } else if (name == "Sou") {
+                ligFlag = true;
+                dirValue = value;
+            } 
+        });
+    }
+
 
     /**
      * Se elige un canal de radio por el cual mandarle los 
      * datos que pida la micro:bit conectada a la UBit.
      */
     //% block="Enviar datos solicitados UBit $int"
+    //% int.min=1 int.max=255
     export function SendAllSenInt(int: number) {
         radio.setGroup(int);
         radio.onReceivedString(function (receivedString) {
@@ -361,6 +398,7 @@ namespace UBit {
                 }
                 case "Lig": {
                     radio.sendValue("Lig", input.lightLevel());
+                    basic.showNumber(input.lightLevel());
                     break;
                 }
                 case "Sou": {
@@ -383,5 +421,4 @@ namespace UBit {
             }
         });
     }
-    
 }
