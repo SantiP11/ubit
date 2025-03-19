@@ -272,14 +272,14 @@ namespace UBit {
         radio.setGroup(sensorNumber);
         radio.sendString("Lig");
 
-        control.waitMicros(200); // Wait to ensure the temperature has been received
-
         // Wait for the temperature to be received
         radio.onReceivedValue(function (name: string, value: number) {
             if (name == "Lig") {
                 light = value; // Capture the temperature value
             }
         });
+
+        control.waitMicros(200); // Wait to ensure the temperature has been received
 
         return light;
     }
