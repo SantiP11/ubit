@@ -4,8 +4,6 @@
 * Lea más en https://makecode.microbit.org/blocks/custom
 */
 
-
-
 enum Sensor {
     Temperatura,
     Luz,
@@ -26,9 +24,6 @@ let StopI2CScreen = 0
 
 let newLedMatrix = pins.createBuffer(25);
 let lastLedMatrix = pins.createBuffer(25);
-
-
-
 
 // Declare a 2D array for the matrix (rows are declared here)
 
@@ -82,6 +77,34 @@ function sendTextBuffer(message: string) {
     // Send buffer via I2C
     pins.i2cWriteBuffer(7, buffer2, false);
 }
+
+function checkMovement(): Gesture {
+    if (input.isGesture(Gesture.Shake)) {
+        return Gesture.Shake;
+    } else if (input.isGesture(Gesture.LogoUp)) {
+        return Gesture.LogoUp;
+    } else if (input.isGesture(Gesture.LogoDown)) {
+        return Gesture.LogoDown;
+    } else if (input.isGesture(Gesture.TiltLeft)) {
+        return Gesture.TiltLeft;
+    } else if (input.isGesture(Gesture.TiltRight)) {
+        return Gesture.TiltRight;
+    } else if (input.isGesture(Gesture.ScreenUp)) {
+        return Gesture.ScreenUp;
+    } else if (input.isGesture(Gesture.ScreenDown)) {
+        return Gesture.ScreenDown;
+    } else if (input.isGesture(Gesture.FreeFall)) {
+        return Gesture.FreeFall;
+    } else if (input.isGesture(Gesture.ThreeG)) {
+        return Gesture.ThreeG;
+    } else if (input.isGesture(Gesture.SixG)) {
+        return Gesture.SixG;
+    } else if (input.isGesture(Gesture.EightG)) {
+        return Gesture.EightG;
+    }
+    return null;  // No gesture detected
+}
+
 
 //Transforma el string a buffer, lo rellena y lo manda a la UBit
 function sendNumBuffer(message: string) {
@@ -167,12 +190,12 @@ function sendIconBuffer() {
 namespace UBit {
 
     /**
-     * Reproduce el texto o número por audio en la UBit y lo muestra en la pantalla.
-     */
-    //% block="Mostrar cadena $text con audio"
-    //% text.shadowOptions.toString=true
-    export function RepTextwithScreen(text: any) {
-        let textString = text.toString(); // Convierte cualquier entrada a cadena
+    * Reproduce el texto o número por audio en la UBit y lo muestra en la pantalla.
+    */
+    //% block="Mostrar cadena $message con audio"
+    //% message.shadow="text"
+    export function RepTextwithScreen(message: any) {
+        let textString = message.toString(); // Convert number to string if needed
         StopI2CScreen = 1;
         sendTextBuffer(textString);
         basic.showString(textString);
@@ -180,49 +203,16 @@ namespace UBit {
     }
 
 
-
     /**
     * Reproduce el texto escrito por audio en la UBit.
     */
-    //% block="Reproducir $text por audio"
-    export function RepText(text: string) {
+    //% block="Reproducir $message por audio"
+    //% message.shadow="text"
+    export function RepText(message: any) {
+        let text = message.toString(); // Convert number to string if needed
         StopI2CScreen = 1
         sendTextBuffer(text)
         StopI2CScreen = 0
-    }
-
-    /*ME QUEDE ACAAAAAAAAAAAA , HAY QUE TESTEAR PARA ABAJO
-
-    /**
-    * Reproduce el número escrito por audio en la UBit.
-    */
-    //% block="Reproducir $num por audio"
-    export function RepNum(num: number) {
-        let textString = num.toString(); // Convierte cualquier entrada a cadena
-        StopI2CScreen = 1
-        if(num>=0 && num<=9){
-            sendNumBuffer(textString)
-        } else if (num>9){
-            sendTextBuffer(textString)
-        }
-        StopI2CScreen = 0
-    }
-
-    /**
-    * Reproduce el número escrito por audio en la UBit y muestra en pantalla.
-    */
-    //% block="Mostrar en pantalla $num y reproducir por audio"
-    export function RepNumwithScreen(num: number) {
-        let textString = num.toString(); // Convierte cualquier entrada a cadena
-        StopI2CScreen = 1
-        if (num >= 0 && num <= 9) {
-            sendNumBuffer(textString)
-        } else if (num > 9) {
-            StopI2CScreen = 1
-            sendTextBuffer(textString)
-            StopI2CScreen = 0
-        }
-        basic.showNumber(num);
     }
 
     /**
@@ -231,11 +221,39 @@ namespace UBit {
     */
     //% block="Conectarse a la red $WiFi con la contraseña $Pssw"
     export function ConWiFi(WiFi: string, Pssw: string) {
-        StopI2CScreen=1
+        StopI2CScreen = 1
         sendWiFiBuffer(WiFi, Pssw)
         StopI2CScreen = 0
         str = ""
     }
+
+
+    /*ME QUEDE ACAAAAAAAAAAAA , HAY QUE TESTEAR PARA ABAJO
+
+    /**
+    * Reproduce el texto o número por audio en la UBit y lo muestra en la pantalla.
+    */
+    //% block="Mostrar numero $message con audio"
+    export function RepNumtwithScreen(message: number) {
+        let textString = message.toString(); // Convert number to string if needed
+        StopI2CScreen = 1;
+        sendTextBuffer(textString);
+        basic.showString(textString);
+        StopI2CScreen = 0;
+    }
+
+
+    /**
+    * Reproduce el texto escrito por audio en la UBit.
+    */
+    //% block="Reproducir número $message por audio"
+    export function RepNum(message: number) {
+        let num = message.toString(); // Convert number to string if needed
+        StopI2CScreen = 1
+        sendTextBuffer(num)
+        StopI2CScreen = 0
+    }
+
 
     /**
     * Habilita/deshabilita la salida por audio de lo 
@@ -252,304 +270,151 @@ namespace UBit {
         }    
     }
 
+
     /**
-    * Se escoge un sensor (y otro párametro de ser necesario) 
-    * y un canal de radio por el cual pedir los datos.
-    */
-    //% block="Utilizar el sensor de $yes por el canal $int, dimension $x y rotacion $y"
-    export function ActSen(yes: Sensor, int: number, x: Dimension, y: Rotation) {
-        radio.setGroup(int)
-        switch(yes){
-            case (0):{
-                radio.sendString("Temp")
-                control.waitMicros(200)
-                break;
-            } case (1): {
-                radio.sendString("Luz")
-                control.waitMicros(200)
-                break;
-            } case (2): {
-                radio.sendString("Sonido")
-                control.waitMicros(200)
-                break;
-            } case (3): {
-                switch(x){
-                    case(0):{
-                        radio.sendString("Accelx")
-                        control.waitMicros(200)
-                        break;
-                    } case (1): {
-                        radio.sendString("Accely")
-                        control.waitMicros(200)
-                        break;
-                    } case (2): {
-                        radio.sendString("Accelz")
-                        control.waitMicros(200)
-                        break;
-                    } case (3): {
-                        radio.sendString("AccelF")
-                        control.waitMicros(200)
-                        break;
-                    }
-                }
-                break;
-            } case (4): {
-                radio.sendString("Bru")
-                control.waitMicros(200)
-                break;
-            } case (5): {
-                switch (y) {
-                    case (0): {
-                        radio.sendString("Rot0")
-                        control.waitMicros(200)
-                        break;
-                    } case (1): {
-                        radio.sendString("Rot1")
-                        control.waitMicros(200)
-                        break;
-                    }
-                }    
-                break;
-            } case (6): {
-                radio.sendString("Time")
-                control.waitMicros(200)
-                break;
-            } case (7): {
-                switch (x) {
-                    case (0): {
-                        radio.sendString("FMagx")
-                        control.waitMicros(200)
-                        break;
-                    } case (1): {
-                        radio.sendString("FMagy")
-                        control.waitMicros(200)
-                        break;
-                    } case (2): {
-                        radio.sendString("FMagz")
-                        control.waitMicros(200)
-                        break;
-                    } case (3): {
-                        radio.sendString("FMagF")
-                        control.waitMicros(200)
-                        break;
-                    }
-                }
-                break;
+     * Get the temperature in Celsius from a specified micro:bit.
+     * @param sensorNumber The radio group number to communicate with a micro:bit.
+     */
+    //% block="temperatura (°C) desde micro:bit $sensorNumber"
+    export function getTemperature(sensorNumber: number): number {
+        let temperature: number = -1; // Default value indicating no data received
+
+        radio.setGroup(sensorNumber);
+        radio.sendString("Temp");
+
+        control.waitMicros(200); // Wait to ensure the temperature has been received
+
+        // Wait for the temperature to be received
+        radio.onReceivedValue(function (name: string, value: number) {
+            if (name == "Tem") {
+                temperature = value; // Capture the temperature value
             }
-        }
+        });
 
+        return temperature;
     }
 
     /**
-    * Se escogen todos los sensores disponibles 
-    * y un canal de radio por el cual pedir los datos.
-    */
-    //% block="Utilizar todos los sensores externos en el canal $int"
-    export function ActAllSenExt(int: number) {
-        radio.setGroup(int)
-        radio.sendString("All")
-        control.waitMicros(200)
+ * Tomar el nivel de luz desde una microbit externa
+ * @param sensorNumber The radio group number to communicate with a micro:bit.
+ */
+    //% block="Nivel de luz desde micro:bit $sensorNumber"
+    export function getLight(sensorNumber: number): number {
+        let light: number = -1; // Default value indicating no data received
+
+        radio.setGroup(sensorNumber);
+        radio.sendString("Lig");
+
+        control.waitMicros(200); // Wait to ensure the temperature has been received
+
+        // Wait for the temperature to be received
+        radio.onReceivedValue(function (name: string, value: number) {
+            if (name == "Lig") {
+                light = value; // Capture the temperature value
+            }
+        });
+
+        return light;
     }
 
     /**
-    * Se elige un canal de radio por el cual mandarle los 
-    * datos que pida la micro:bit conectada a la UBit.
+* Tomar el nivel de sonido desde una microbit externa
+* @param sensorNumber The radio group number to communicate with a micro:bit.
+*/
+    //% block="Nivel de sonido desde micro:bit $sensorNumber"
+    export function getSound(sensorNumber: number): number {
+        let sound: number = -1; // Default value indicating no data received
+
+        radio.setGroup(sensorNumber);
+        radio.sendString("Sou");
+
+        control.waitMicros(200); // Wait to ensure the temperature has been received
+
+        // Wait for the temperature to be received
+        radio.onReceivedValue(function (name: string, value: number) {
+            if (name == "Sou") {
+                sound = value; // Capture the temperature value
+            }
+        });
+
+        return sound;
+    }
+
+    /**
+* Tomar la dirección de la brujula desde una microbit externa
+* @param sensorNumber The radio group number to communicate with a micro:bit.
+*/
+    //% block="Dirección de la brujula de la micro:bit $sensorNumber"
+    export function getDirection(sensorNumber: number): number {
+        let direction: number = -1; // Default value indicating no data received
+
+        radio.setGroup(sensorNumber);
+        radio.sendString("Dir");
+
+        control.waitMicros(200); // Wait to ensure the temperature has been received
+
+        // Wait for the temperature to be received
+        radio.onReceivedValue(function (name: string, value: number) {
+            if (name == "Dir") {
+                direction = value; // Capture the temperature value
+            }
+        });
+
+        return direction;
+    }
+
+    /**
+    * Detecta si el micro:bit está realizando un gesto y ejecuta una acción.
     */
-    //% block="Enviar datos de sensores por el canal $int a la UBit"
+    //% block="si $gesture en micro:bit $sensorNumber"
+    export function onGestureDetect(sensorNumber: number, gesture: Gesture, handler: () => void): void {
+        radio.setGroup(sensorNumber); // Configura el grupo de radio con el número del sensor.
+        radio.onReceivedValue(function (name: string, value: Gesture) {
+            if (name == "Ges") {
+                if (value == gesture) { 
+                    handler(); // Ejecuta la acción
+                }
+            }
+        });
+    }
+
+
+    /**
+     * Se elige un canal de radio por el cual mandarle los 
+     * datos que pida la micro:bit conectada a la UBit.
+     */
+    //% block="Enviar datos solicitados UBit $int"
     export function SendAllSenInt(int: number) {
-        radio.setGroup(int)
+        radio.setGroup(int);
         radio.onReceivedString(function (receivedString) {
-            switch(receivedString){
-                case ("Temp"):{
-                    radio.sendValue("Temp", input.temperature())
-                    basic.showLeds(`
-                    . . . . .
-                    # # # # #
-                    . . # . .
-                    . . # . .
-                    . . # . .
-                    `)
+            switch (receivedString) {
+                case "Tem": {
+                    radio.sendValue("Tem", input.temperature());
                     break;
-                } case ("Luz"): {
-                    radio.sendValue("Luz", input.temperature())
-                    basic.showLeds(`
-                    . . . . .
-                    . # . . .
-                    . # . . .
-                    . # . . .
-                    . # # # .
-                    `)
+                }
+                case "Lig": {
+                    radio.sendValue("Lig", input.lightLevel());
                     break;
-                } case ("Sonido"):{
-                    radio.sendValue("Sonido", input.lightLevel())
-                    basic.showLeds(`
-                    . # # # #
-                    # . . . .
-                    . # # # .
-                    . . . . #
-                    # # # # #
-                    `)
+                }
+                case "Sou": {
+                    radio.sendValue("Sou", input.soundLevel());
                     break;
-                } case ("Accelx"): {
-                    radio.sendValue("Accel", input.acceleration(0))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    . # . # .
-                    . # . # .
-                    `)
+                }
+                case "Dir": {
+                    radio.sendValue("Dir", input.compassHeading());
                     break;
-                } case ("Accely"): {
-                    radio.sendValue("Accel", input.acceleration(1))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    . # . # .
-                    . # . # .
-                    `)
-                    break;
-                } case ("Accelz"): {
-                    radio.sendValue("Accel", input.acceleration(2))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    . # . # .
-                    . # . # .
-                    `)
-                    break;
-                } case ("AccelF"): {
-                    radio.sendValue("Accel", input.acceleration(3))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    . # . # .
-                    . # . # .
-                    `)
-                } case ("Bru"): {
-                    radio.sendValue("Bru", input.compassHeading())
-                    basic.showLeds(`
-                    . # . . .
-                    . # . . .
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    `)
-                    break;
-                } case ("Rot0"): {
-                    radio.sendValue("Rot", input.rotation(0))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    . # # . .
-                    . # . # .
-                    `)
-                    break;
-                } case ("Rot1"): {
-                    radio.sendValue("Rot", input.rotation(1))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . # .
-                    . # # # .
-                    . # # . .
-                    . # . # .
-                    `)
-                    break;
-                } case ("Time"): {
-                    radio.sendValue("Time", input.runningTime())
-                    basic.showLeds(`
-                    . . . . .
-                    . # . . .
-                    # # # . .
-                    . # . . .
-                    . # # # .
-                    `)
-                    break;
-                } case ("FMagx"): {
-                    radio.sendValue("FMag", input.magneticForce(0))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . . .
-                    . # # # .
-                    . # . . .
-                    . # . . .
-                    `)
-                    break;
-                } case ("FMagy"): {
-                    radio.sendValue("FMag", input.magneticForce(1))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . . .
-                    . # # # .
-                    . # . . .
-                    . # . . .
-                    `)
-                    break;
-                } case ("FMagz"): {
-                    radio.sendValue("FMag", input.magneticForce(2))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . . .
-                    . # # # .
-                    . # . . .
-                    . # . . .
-                    `)
-                    break;
-                } case ("FMagF"): {
-                    radio.sendValue("FMag", input.magneticForce(3))
-                    basic.showLeds(`
-                    . # # # .
-                    . # . . .
-                    . # # # .
-                    . # . . .
-                    . # . . .
-                    `)
-                    break;
-                } case ("All"): {
-                    radio.sendValue("Temp", input.temperature())
-                    control.waitMicros(200)
-                    radio.sendValue("Luz", input.temperature())
-                    control.waitMicros(200)
-                    radio.sendValue("Sonido", input.lightLevel())
-                    control.waitMicros(200)
-                    radio.sendValue("Accel", input.acceleration(0))
-                    control.waitMicros(200)
-                    radio.sendValue("Accel", input.acceleration(1))
-                    control.waitMicros(200)
-                    radio.sendValue("Accel", input.acceleration(2))
-                    control.waitMicros(200)
-                    radio.sendValue("Accel", input.acceleration(3))
-                    control.waitMicros(200)
-                    radio.sendValue("Bru", input.compassHeading())
-                    control.waitMicros(200)
-                    radio.sendValue("Rot", input.rotation(0))
-                    control.waitMicros(200)
-                    radio.sendValue("Rot", input.rotation(1))
-                    control.waitMicros(200)
-                    radio.sendValue("Time", input.runningTime())
-                    control.waitMicros(200)
-                    radio.sendValue("FMag", input.magneticForce(0))
-                    control.waitMicros(200)
-                    radio.sendValue("FMag", input.magneticForce(1))
-                    control.waitMicros(200)
-                    radio.sendValue("FMag", input.magneticForce(2))
-                    control.waitMicros(200)
-                    radio.sendValue("FMag", input.magneticForce(3))
-                    basic.showLeds(`
-                    # # # # #
-                    # # # # #
-                    # # # # #
-                    # # # # #
-                    # # # # #
-                    `)
+                }
+                default: {
                     break;
                 }
             }
-        })    
-    }
 
+            // Detectar movimiento
+            let acceler = checkMovement();
+            if (acceler != null) {
+                radio.sendValue("Ges", acceler);
+            }
+        });
+    }
+    
 }
