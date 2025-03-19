@@ -324,7 +324,7 @@ namespace UBit {
     /**
     * Tomar la dirección de la brujula desde una microbit externa
     */
-    //% block="Dirección de la brujula de la micro:bit "
+    //% block="Dirección de la brujula de micro:bit externa "
     export function getDirection(): number {
         let direction: number = -1; // Default value indicating no data received
         let startTime = input.runningTime();  // Get the current time in milliseconds
@@ -334,7 +334,7 @@ namespace UBit {
         // Wait for the temperature to be received
         while (input.runningTime() - startTime < waitTime) {
             if (dirFlag) {
-                direction = ligValue
+                direction = dirValue
                 dirFlag = false;
                 return direction;
             }
