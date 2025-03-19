@@ -106,27 +106,6 @@ function checkMovement(): Gesture {
 }
 
 
-//Transforma el string a buffer, lo rellena y lo manda a la UBit
-function sendNumBuffer(message: string) {
-    // Ensure the message does not exceed BUFF_LEN - 1 to make space for '%'
-    if (message.length > BUFF_LEN - 1) {
-        message = message.slice(0, BUFF_LEN - 1);
-    }
-
-    // Add '&' at the start and shift the message
-    message = "&" + message + "&";
-
-    // Pad the message to BUFF_LEN with spaces
-    message = padEnd(message, BUFF_LEN, " ");
-
-    let buffer2 = pins.createBuffer(BUFF_LEN);
-    for (let i = 0; i < BUFF_LEN; i++) {
-        buffer2.setNumber(NumberFormat.UInt8LE, i, message.charCodeAt(i));
-    }
-
-    // Send buffer via I2C
-    pins.i2cWriteBuffer(7, buffer2, false);
-}
 
 function copyBuffer(original: Buffer): Buffer {
     let copy = pins.createBuffer(original.length);
@@ -240,18 +219,6 @@ namespace UBit {
         sendTextBuffer(textString);
         basic.showString(textString);
         StopI2CScreen = 0;
-    }
-
-
-    /**
-    * Reproduce el texto escrito por audio en la UBit.
-    */
-    //% block="Reproducir número $message por audio"
-    export function RepNum(message: number) {
-        let num = message.toString(); // Convert number to string if needed
-        StopI2CScreen = 1
-        sendTextBuffer(num)
-        StopI2CScreen = 0
     }
 
 
