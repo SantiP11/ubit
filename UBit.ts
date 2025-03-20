@@ -247,8 +247,9 @@ namespace UBit {
     export function Icon(yes: boolean) {
         if(yes) {
             loops.everyInterval(I2C_TIME_INTERVAL, function () {
-                if (StopI2CScreen == 0)
-                sendIconBuffer();
+                if (StopI2CScreen == 0){
+                    sendIconBuffer();
+                }  
             })
         }    
     }
