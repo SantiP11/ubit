@@ -280,21 +280,13 @@ namespace UBit {
      */
     //% block="temperatura (°C) desde micro:bit externa"
     export function getTemperature(): number {
-        let startTime = input.runningTime();  // Get the current time in milliseconds
-        let temperature: number = -1; // Default value indicating no data received
-
-        radio.sendString("Tem");
-
-        // Wait for the temperature to be received
-        while (input.runningTime() - startTime < waitTime) {
-            if (ligFlag) {
-                temperature = temValue
-                ligFlag = false;
-                return temperature;
-            }
+        if (temFlag == true) {
+            temFlag = false;
+            return temValue;
         }
-
-        return -1;
+        else {
+            return -1;
+        }
     }
 
     /**
@@ -302,21 +294,13 @@ namespace UBit {
  */
     //% block="Nivel de luz desde micro:bit externa"
     export function getLight(): number {
-        let startTime = input.runningTime();  // Get the current time in milliseconds
-        let light: number = -1; // Default value indicating no data received
-
-        radio.sendString("Lig");
-
-        // Wait for the temperature to be received
-        while (input.runningTime() - startTime < waitTime) {
-            if (ligFlag) {
-                light = ligValue
-                ligFlag = false;
-                return light;
-            }
+        if (ligFlag == true) {
+            ligFlag = false;
+            return ligValue;
         }
-
-        return -1;
+        else {
+            return -1;
+        }
     }
 
     /**
@@ -324,21 +308,13 @@ namespace UBit {
     */
     //% block="Nivel de sonido desde micro:bit externa"
     export function getSound(): number {
-        let sound: number = -1; // Default value indicating no data received
-        let startTime = input.runningTime();  // Get the current time in milliseconds
-
-        radio.sendString("Sou");
-
-        // Wait for the temperature to be received
-        while (input.runningTime() - startTime < waitTime) {
-            if (souFlag) {
-                sound = ligValue
-                souFlag = false;
-                return sound;
-            }
+        if (souFlag == true) {
+            souFlag = false;
+            return souValue;
         }
-
-        return -1;
+        else {
+            return -1;
+        }
     }
 
     /**
@@ -346,21 +322,13 @@ namespace UBit {
     */
     //% block="Dirección de la brujula de micro:bit externa "
     export function getDirection(): number {
-        let direction: number = -1; // Default value indicating no data received
-        let startTime = input.runningTime();  // Get the current time in milliseconds
-
-        radio.sendString("Dir");
-
-        // Wait for the temperature to be received
-        while (input.runningTime() - startTime < waitTime) {
-            if (dirFlag) {
-                direction = dirValue
-                dirFlag = false;
-                return direction;
-            }
+        if (dirFlag == true){
+            dirFlag = false;
+            return dirValue;
         }
-
-        return -1;
+        else {
+            return -1;
+        }
     }
 
     /**
