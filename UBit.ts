@@ -364,26 +364,6 @@ namespace UBit {
     }
 
     /**
-    * Ejecuta una acción cuando se recibe un gesto específico por radio.
-    */
-    //% block="Cuando se reciba el gesto $gesture en el canal $channel hacer $handler"
-    //% gesture.defl=Gesture.Shake
-    //% channel.min=1 channel.max=255
-    export function onGestureReceived(gesture: Gesture, channel: number, handler: () => void): void {
-        radio.setGroup(channel); // Set the chosen radio channel
-
-        control.onEvent(4001, EventBusValue.MICROBIT_EVT_ANY, function () {
-            let receivedGesture = control.eventValue();
-            if (receivedGesture === gesture) {
-                handler(); // Execute user-provided function if gesture matches
-            }
-        });
-    }
-
-
-    
-
-    /**
     * Usar sensores externos de micro:bit
     */
     //% block="Usar sensores de micro:bit externa $channel"
@@ -403,32 +383,49 @@ namespace UBit {
             } else if (name == "Sou") {
                 ligFlag = true;
                 dirValue = value;
-            } 
+            }
         });
     }
 
     /**
-     * Se elige un canal de radio por el cual mandarle los
-     * datos que pida la micro:bit conectada a la UBit.
-     */
+    * Ejecuta una acción cuando se recibe un gesto específico por radio.
+    */
+    //% block="Cuando la micro:bit $channel sea $gesture"
+    //% gesture.defl=Gesture.Shake
+    //% channel.min=1 channel.max=255
+    export function onGestureReceived(gesture: Gesture, channel: number, handler: () => void): void {
+        radio.setGroup(channel); // Set the chosen radio channel
+        control.onEvent(4001, EventBusValue.MICROBIT_EVT_ANY, function () {
+            let receivedGesture = control.eventValue();
+            if (receivedGesture === gesture) {
+                handler(); // Execute user-provided function if gesture matches
+            }
+        });
+    }
+
+    /**
+    * Se elige un canal de radio por el cual mandarle los
+    * datos que pida la micro:bit conectada a la UBit.
+    */
     //% block="Enviar datos a UBit $int"
     //% int.min=1 int.max=255
     export function startRadioListener(int: number): void {
         radio.setGroup(int);
+
         control.inBackground(function () {
             while (true) {
                 let msg = radio.receiveNumber();
                 if (!isNaN(msg)) {
                     lastReceivedNumber = msg;
-                    handleMessage(msg)
+                    handleMessage(msg);
                 }
                 basic.pause(50); // Prevents crashing by adding a delay
-            }       
-            // Register a single event handler for gesture detection
-            control.onEvent(EventBusSource.MICROBIT_ID_GESTURE, EventBusValue.MICROBIT_EVT_ANY, function () {
-                let gesture = control.eventValue();
-                radio.raiseEvent(4001, gesture); // Send the gesture event over radio
-            });
+            }
+        });
+
+        control.onEvent(EventBusSource.MICROBIT_ID_GESTURE, EventBusValue.MICROBIT_EVT_ANY, function () {
+            let gesture = control.eventValue();
+            radio.raiseEvent(4001, gesture); // Send the gesture event over radio
         });
     }
 
