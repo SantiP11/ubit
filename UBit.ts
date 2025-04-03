@@ -407,19 +407,15 @@ namespace UBit {
     * Se elige un canal de radio por el cual mandarle los
     * datos que pida la micro:bit conectada a la UBit.
     */
-    //% block="Enviar datos a UBit $int"
+    //% block="Compartir sensores con UBit $int"
     //% int.min=1 int.max=255
-    export function startRadioListener(int: number): void {
+    export function shareSensorsWithUBit(int: number): void {
         radio.setGroup(int);
-
-        control.inBackground(function () {
-            while (true) {
-                let msg = radio.receiveNumber();
-                if (!isNaN(msg)) {
-                    lastReceivedNumber = msg;
-                    handleMessage(msg);
-                }
-                basic.pause(50); // Prevents crashing by adding a delay
+        
+        radio.onReceivedNumber(function (msg: number) {
+            if (!isNaN(msg)) {
+                lastReceivedNumber = msg;
+                handleMessage(msg);
             }
         });
 
