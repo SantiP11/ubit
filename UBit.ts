@@ -417,14 +417,12 @@ namespace UBit {
                     handleMessage(msg)
                 }
                 basic.pause(50); // Prevents crashing by adding a delay
-            }
-            
-            // Register a single event handler for all gestures
-            control.onEvent(3001, EventBusValue.MICROBIT_EVT_ANY, function () {
+            }       
+            // Register a single event handler for gesture detection
+            control.onEvent(EventBusSource.MICROBIT_ID_GESTURE, EventBusValue.MICROBIT_EVT_ANY, function () {
                 let gesture = control.eventValue();
                 radio.raiseEvent(4001, gesture); // Send the gesture event over radio
             });
-
         });
     }
 
