@@ -3,10 +3,25 @@
 * Utilice este archivo para definir funciones y bloques personalizados.
 * Lea más en https://makecode.microbit.org/blocks/custom
 */
-let waitTime = 1000;  // 5000 milliseconds = 5 seconds
+
+let _remoteLight: number = -999; // Variable to store the last received temperature
+let _waitingForLight: boolean = false; // Flag to indicate if we are currently waiting for a response
+let _responseLight: boolean = false; // Flag to indicate if a response came back during the wait
+
+let _remoteTemperature: number = -999; // Variable to store the last received temperature
+let _waitingForTemperature: boolean = false; // Flag to indicate if we are currently waiting for a response
+let _responseTemperature: boolean = false; // Flag to indicate if a response came back during the wait
+
+let _remoteDirection: number = -999; // Variable to store the last received temperature
+let _waitingForDirection: boolean = false; // Flag to indicate if we are currently waiting for a response
+let _responseDirection: boolean = false; // Flag to indicate if a response came back during the wait
+
+let _remoteSound: number = -999; // Variable to store the last received temperature
+let _waitingForSound: boolean = false; // Flag to indicate if we are currently waiting for a response
+let _responseSound: boolean = false; // Flag to indicate if a response came back during the wait
 
 // Stores the last received number
-let lastReceivedNumber = 0;
+let lastReceivedNumber = "";
 
 enum Sensor {
     Temperatura,
@@ -165,17 +180,17 @@ function sendIconBuffer() {
 }
 
 // Function to handle different messages
-function handleMessage(msg: number): void {
-    if (msg == 1) {
+function handleMessage(msg: string): void {
+    if (msg == "Tem") {
+        radio.sendValue("Tem", input.temperature());
+    } else if (msg == "Lig") {
+        radio.sendValue("Lig", input.lightLevel());
+    } else if (msg == "Sou") {
+        radio.sendValue("Sou", input.soundLevel());
+    } else if (msg == "Dir") {
+        radio.sendValue("Dir", input.compassHeading());
+    } else if (msg == "-1") {
         radio.sendString("Hello!");
-    } else if (msg == 2) {
-        radio.sendValue("temperature", input.temperature());
-    } else if (msg == 3) {
-        radio.sendValue("light", input.lightLevel());
-    } else if (msg == 4) {
-        radio.sendValue("sound", input.soundLevel());
-    } else if (msg == 5) {
-        radio.sendString("Custom message received");
     }
 }
 
@@ -280,6 +295,7 @@ namespace UBit {
      */
     //% block="temperatura (°C) desde micro:bit externa"
     export function getTemperature(): number {
+        radio.sendString("Tem");
         if (temFlag == true) {
             temFlag = false;
             return temValue;
@@ -290,24 +306,45 @@ namespace UBit {
     }
 
     /**
- * Tomar el nivel de luz desde una microbit externa
+ * Tomar el nivel de luz desde una micro:bit externa
  */
     //% block="Nivel de luz desde micro:bit externa"
     export function getLight(): number {
-        if (ligFlag == true) {
-            ligFlag = false;
-            return ligValue;
+        // Reset state for this request
+        _remoteLight = -999; // Default/error value
+        _waitingForLight = true;
+        _responseLight = false;
+
+        // Send the request signal
+        radio.sendString("Lig");
+
+        // Wait for a response with a timeout
+        const startTime = control.millis();
+        const timeout = 1000; // 1000 ms = 1 second timeout
+
+        while (control.millis() - startTime < timeout) {
+            if (_responseLight) {
+                // Response arrived (handler set _responseReceived and _remoteTemperature)
+                // _waitingForTemperature should already be false from the handler
+                return _remoteLight;
+            }
+            // Pause briefly to allow background tasks (like radio receive) to run
+            basic.pause(20);
         }
-        else {
-            return -1;
-        }
+
+        // If loop finishes without _responseReceived being true, it's a timeout
+        _waitingForLight = false; // Ensure we are no longer waiting
+        // serial.writeLine("Timeout waiting for remote temp"); // Optional debug message
+        return -999; // Indicate timeout/failure
     }
+
 
     /**
     * Tomar el nivel de sonido desde una microbit externa
     */
     //% block="Nivel de sonido desde micro:bit externa"
     export function getSound(): number {
+        radio.sendString("Sou");
         if (souFlag == true) {
             souFlag = false;
             return souValue;
@@ -322,6 +359,7 @@ namespace UBit {
     */
     //% block="Dirección de la brujula de micro:bit externa "
     export function getDirection(): number {
+        radio.sendString("Dir");
         if (dirFlag == true){
             dirFlag = false;
             return dirValue;
@@ -338,11 +376,11 @@ namespace UBit {
     //% channel.min=1 channel.max=255
     export function ExternalSensors(channel: number) {
         radio.setGroup(channel);
-        radio.onReceivedValue(function (name, value) {
+        /**radio.onReceivedValue(function (name, value) {
             if (name == "Tem") {
                 temFlag = true;
                 temValue = value;
-            } else if (name == "Lig") {
+             } else if (name == "Lig") {
                 ligFlag = true;
                 ligValue = value;
             } else if (name == "Dir") {
@@ -352,17 +390,39 @@ namespace UBit {
                 ligFlag = true;
                 dirValue = value;
             }
-        });
+        });*/
+
+        radio.onReceivedValue(function (tag, value) {
+            if (_waitingForLight && tag == "Lig") {
+                _remoteLight = value;
+                _responseLight = true;
+                _waitingForLight = false; // Stop waiting once received
+            }
+            if (_waitingForTemperature && tag == "Tem") {
+                _remoteTemperature = value;
+                _responseTemperature = true;
+                _waitingForTemperature = false; // Stop waiting once received
+            }
+            if (_waitingForDirection && tag == "Dir") {
+                _remoteDirection = value;
+                _responseDirection = true;
+                _waitingForDirection = false; // Stop waiting once received
+            }
+            if (_waitingForSound && tag == "Sou") {
+                _remoteSound = value;
+                _responseSound = true;
+                _waitingForSound = false; // Stop waiting once received
+            }
+        })
     }
 
     /**
     * Ejecuta una acción cuando se recibe un gesto específico por radio.
     */
-    //% block="Cuando la micro:bit $channel sea $gesture"
+    //% block="Cuando la micro:bit externa sea $gesture"
     //% gesture.defl=Gesture.Shake
     //% channel.min=1 channel.max=255
-    export function onGestureReceived(gesture: Gesture, channel: number, handler: () => void): void {
-        radio.setGroup(channel); // Set the chosen radio channel
+    export function onGestureReceived(gesture: Gesture, handler: () => void): void {
         control.onEvent(4001, EventBusValue.MICROBIT_EVT_ANY, function () {
             let receivedGesture = control.eventValue();
             if (receivedGesture === gesture) {
@@ -380,11 +440,8 @@ namespace UBit {
     export function shareSensorsWithUBit(int: number): void {
         radio.setGroup(int);
         
-        radio.onReceivedNumber(function (msg: number) {
-            if (!isNaN(msg)) {
-                lastReceivedNumber = msg;
-                handleMessage(msg);
-            }
+        radio.onReceivedString(function (msg: string) {
+            handleMessage(msg);
         });
 
         control.onEvent(EventBusSource.MICROBIT_ID_GESTURE, EventBusValue.MICROBIT_EVT_ANY, function () {
