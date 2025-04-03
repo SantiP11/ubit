@@ -416,7 +416,6 @@ namespace UBit {
     */
     //% block="Cuando la micro:bit externa sea $gesture"
     //% gesture.defl=Gesture.Shake
-    //% channel.min=1 channel.max=255
     export function onGestureReceived(gesture: Gesture, handler: () => void): void {
         control.onEvent(4001, EventBusValue.MICROBIT_EVT_ANY, function () {
             let receivedGesture = control.eventValue();
