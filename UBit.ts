@@ -5,6 +5,9 @@
 */
 let waitTime = 1000;  // 5000 milliseconds = 5 seconds
 
+// Stores the last received number
+let lastReceivedNumber = 0;
+
 enum Sensor {
     Temperatura,
     Luz,
@@ -82,6 +85,7 @@ function sendTextBuffer(message: string) {
 function checkMovement(): Gesture {
     if (input.isGesture(Gesture.Shake)) {
         return Gesture.Shake;
+        basic.showNumber(1)
     } else if (input.isGesture(Gesture.LogoUp)) {
         return Gesture.LogoUp;
     } else if (input.isGesture(Gesture.LogoDown)) {
@@ -158,6 +162,21 @@ function sendIconBuffer() {
 
     // Send the buffer via I2C
     pins.i2cWriteBuffer(7, buffer2, false);
+}
+
+// Function to handle different messages
+function handleMessage(msg: number): void {
+    if (msg == 1) {
+        radio.sendString("Hello!");
+    } else if (msg == 2) {
+        radio.sendValue("temperature", input.temperature());
+    } else if (msg == 3) {
+        radio.sendValue("light", input.lightLevel());
+    } else if (msg == 4) {
+        radio.sendValue("sound", input.soundLevel());
+    } else if (msg == 5) {
+        radio.sendString("Custom message received");
+    }
 }
 
 
@@ -382,44 +401,51 @@ namespace UBit {
         });
     }
 
-
     /**
-     * Se elige un canal de radio por el cual mandarle los 
+     * Se elige un canal de radio por el cual mandarle los
      * datos que pida la micro:bit conectada a la UBit.
      */
-    //% block="Enviar datos solicitados UBit $int"
+    //% block="Enviar datos a UBit $int"
     //% int.min=1 int.max=255
-    export function SendAllSenInt(int: number) {
+    export function startRadioListener(int: number): void {
         radio.setGroup(int);
-        radio.onReceivedString(function (receivedString) {
-            switch (receivedString) {
-                case "Tem": {
-                    radio.sendValue("Tem", input.temperature());
-                    break;
+        control.inBackground(function () {
+            while (true) {
+                let msg = radio.receiveNumber();
+                if (!isNaN(msg)) {
+                    lastReceivedNumber = msg;
+                    handleMessage(msg)
                 }
-                case "Lig": {
-                    radio.sendValue("Lig", input.lightLevel());
-                    basic.showNumber(input.lightLevel());
-                    break;
-                }
-                case "Sou": {
-                    radio.sendValue("Sou", input.soundLevel());
-                    break;
-                }
-                case "Dir": {
-                    radio.sendValue("Dir", input.compassHeading());
-                    break;
-                }
-                default: {
-                    break;
-                }
+                basic.pause(50); // Prevents crashing by adding a delay
             }
+            
+            // Register a single event handler for all gestures
+            control.onEvent(3001, EventBusValue.MICROBIT_EVT_ANY, function () {
+                let gesture = control.eventValue();
+                radio.raiseEvent(4001, gesture); // Send the gesture event over radio
+            });
 
-            // Detectar movimiento
-            let acceler = checkMovement();
-            if (acceler != null) {
-                radio.sendValue("Ges", acceler);
-            }
+            // Register gestures and raise events locally
+            input.onGesture(Gesture.Shake, function () {
+                control.raiseEvent(3001, Gesture.Shake);
+            });
+
+            input.onGesture(Gesture.TiltLeft, function () {
+                control.raiseEvent(3001, Gesture.TiltLeft);
+            });
+
+            input.onGesture(Gesture.TiltRight, function () {
+                control.raiseEvent(3001, Gesture.TiltRight);
+            });
+
+            input.onGesture(Gesture.LogoUp, function () {
+                control.raiseEvent(3001, Gesture.LogoUp);
+            });
+
+            input.onGesture(Gesture.LogoDown, function () {
+                control.raiseEvent(3001, Gesture.LogoDown);
+            });
         });
     }
+
 }
