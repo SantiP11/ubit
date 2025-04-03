@@ -226,9 +226,6 @@ namespace UBit {
         str = ""
     }
 
-
-    /*ME QUEDE ACAAAAAAAAAAAA , HAY QUE TESTEAR PARA ABAJO
-
     /**
     * Reproduce el texto o número por audio en la UBit y lo muestra en la pantalla.
     */
@@ -263,17 +260,15 @@ namespace UBit {
      * Get the temperature in Celsius from a specified micro:bit.
      * @param sensorNumber The radio group number to communicate with a micro:bit.
      */
-    //% block="temperatura (°C) desde micro:bit externa"
+    //% block="Temperatura (°C) de micro:bit externa"
     export function getTemperature(): number {
         // Reset state for this request
         _remoteTemperature = -999; // Default/error value
         _waitingForTemperature = true;
         _responseTemperature = false;
 
-        // Send the request signal
         radio.sendString("Tem");
 
-        // Wait for a response with a timeout
         const startTime = control.millis();
         const timeout = 1000; // 1000 ms = 1 second timeout
 
@@ -287,16 +282,14 @@ namespace UBit {
             basic.pause(20);
         }
 
-        // If loop finishes without _responseReceived being true, it's a timeout
         _waitingForTemperature = false; // Ensure we are no longer waiting
-        // serial.writeLine("Timeout waiting for remote temp"); // Optional debug message
         return -999; // Indicate timeout/failure
     }
 
     /**
  * Tomar el nivel de luz desde una micro:bit externa
  */
-    //% block="Nivel de luz desde micro:bit externa"
+    //% block="Nivel de luz de micro:bit externa"
     export function getLight(): number {
         // Reset state for this request
         _remoteLight = -999; // Default/error value
@@ -330,7 +323,7 @@ namespace UBit {
     /**
     * Tomar el nivel de sonido desde una microbit externa
     */
-    //% block="Nivel de sonido desde micro:bit externa"
+    //% block="Nivel de sonido de micro:bit externa"
     export function getSound(): number {
         // Reset state for this request
         _remoteSound = -999; // Default/error value
@@ -361,7 +354,7 @@ namespace UBit {
     }
 
     /**
-    * Tomar la dirección de la brujula desde una microbit externa
+    * Dirección de brújula de microbit externa
     */
     //% block="Dirección de la brujula de micro:bit externa "
     export function getDirection(): number {
