@@ -364,18 +364,24 @@ namespace UBit {
     }
 
     /**
-    * Detecta si el micro:bit está realizando un gesto y ejecuta una acción.
+    * Ejecuta una acción cuando se recibe un gesto específico por radio.
     */
-    //% block="si $gesture en micro:bit externa"
-    export function onGestureDetect(gesture: Gesture, handler: () => void): void {
-        radio.onReceivedValue(function (name: string, value: Gesture) {
-            if (name == "Ges") {
-                if (value == gesture) { 
-                    handler(); // Ejecuta la acción
-                }
+    //% block="Cuando se reciba el gesto $gesture en el canal $channel hacer $handler"
+    //% gesture.defl=Gesture.Shake
+    //% channel.min=1 channel.max=255
+    export function onGestureReceived(gesture: Gesture, channel: number, handler: () => void): void {
+        radio.setGroup(channel); // Set the chosen radio channel
+
+        control.onEvent(4001, EventBusValue.MICROBIT_EVT_ANY, function () {
+            let receivedGesture = control.eventValue();
+            if (receivedGesture === gesture) {
+                handler(); // Execute user-provided function if gesture matches
             }
         });
     }
+
+
+    
 
     /**
     * Usar sensores externos de micro:bit
