@@ -97,36 +97,6 @@ function sendTextBuffer(message: string) {
     pins.i2cWriteBuffer(7, buffer2, false);
 }
 
-function checkMovement(): Gesture {
-    if (input.isGesture(Gesture.Shake)) {
-        return Gesture.Shake;
-        basic.showNumber(1)
-    } else if (input.isGesture(Gesture.LogoUp)) {
-        return Gesture.LogoUp;
-    } else if (input.isGesture(Gesture.LogoDown)) {
-        return Gesture.LogoDown;
-    } else if (input.isGesture(Gesture.TiltLeft)) {
-        return Gesture.TiltLeft;
-    } else if (input.isGesture(Gesture.TiltRight)) {
-        return Gesture.TiltRight;
-    } else if (input.isGesture(Gesture.ScreenUp)) {
-        return Gesture.ScreenUp;
-    } else if (input.isGesture(Gesture.ScreenDown)) {
-        return Gesture.ScreenDown;
-    } else if (input.isGesture(Gesture.FreeFall)) {
-        return Gesture.FreeFall;
-    } else if (input.isGesture(Gesture.ThreeG)) {
-        return Gesture.ThreeG;
-    } else if (input.isGesture(Gesture.SixG)) {
-        return Gesture.SixG;
-    } else if (input.isGesture(Gesture.EightG)) {
-        return Gesture.EightG;
-    }
-    return null;  // No gesture detected
-}
-
-
-
 function copyBuffer(original: Buffer): Buffer {
     let copy = pins.createBuffer(original.length);
     copy.write(0, original);
@@ -295,14 +265,32 @@ namespace UBit {
      */
     //% block="temperatura (°C) desde micro:bit externa"
     export function getTemperature(): number {
+        // Reset state for this request
+        _remoteTemperature = -999; // Default/error value
+        _waitingForTemperature = true;
+        _responseTemperature = false;
+
+        // Send the request signal
         radio.sendString("Tem");
-        if (temFlag == true) {
-            temFlag = false;
-            return temValue;
+
+        // Wait for a response with a timeout
+        const startTime = control.millis();
+        const timeout = 1000; // 1000 ms = 1 second timeout
+
+        while (control.millis() - startTime < timeout) {
+            if (_responseTemperature) {
+                // Response arrived (handler set _responseReceived and _remoteTemperature)
+                // _waitingForTemperature should already be false from the handler
+                return _remoteTemperature;
+            }
+            // Pause briefly to allow background tasks (like radio receive) to run
+            basic.pause(20);
         }
-        else {
-            return -1;
-        }
+
+        // If loop finishes without _responseReceived being true, it's a timeout
+        _waitingForTemperature = false; // Ensure we are no longer waiting
+        // serial.writeLine("Timeout waiting for remote temp"); // Optional debug message
+        return -999; // Indicate timeout/failure
     }
 
     /**
@@ -344,14 +332,32 @@ namespace UBit {
     */
     //% block="Nivel de sonido desde micro:bit externa"
     export function getSound(): number {
+        // Reset state for this request
+        _remoteSound = -999; // Default/error value
+        _waitingForSound = true;
+        _responseSound = false;
+
+        // Send the request signal
         radio.sendString("Sou");
-        if (souFlag == true) {
-            souFlag = false;
-            return souValue;
+
+        // Wait for a response with a timeout
+        const startTime = control.millis();
+        const timeout = 1000; // 1000 ms = 1 second timeout
+
+        while (control.millis() - startTime < timeout) {
+            if (_responseSound) {
+                // Response arrived (handler set _responseReceived and _remoteTemperature)
+                // _waitingForTemperature should already be false from the handler
+                return _remoteLight;
+            }
+            // Pause briefly to allow background tasks (like radio receive) to run
+            basic.pause(20);
         }
-        else {
-            return -1;
-        }
+
+        // If loop finishes without _responseReceived being true, it's a timeout
+        _waitingForSound = false; // Ensure we are no longer waiting
+        // serial.writeLine("Timeout waiting for remote temp"); // Optional debug message
+        return -999; // Indicate timeout/failure
     }
 
     /**
@@ -359,14 +365,32 @@ namespace UBit {
     */
     //% block="Dirección de la brujula de micro:bit externa "
     export function getDirection(): number {
+        // Reset state for this request
+        _remoteDirection = -999; // Default/error value
+        _waitingForDirection = true;
+        _responseDirection = false;
+
+        // Send the request signal
         radio.sendString("Dir");
-        if (dirFlag == true){
-            dirFlag = false;
-            return dirValue;
+
+        // Wait for a response with a timeout
+        const startTime = control.millis();
+        const timeout = 1000; // 1000 ms = 1 second timeout
+
+        while (control.millis() - startTime < timeout) {
+            if (_responseDirection) {
+                // Response arrived (handler set _responseReceived and _remoteTemperature)
+                // _waitingForTemperature should already be false from the handler
+                return _remoteDirection;
+            }
+            // Pause briefly to allow background tasks (like radio receive) to run
+            basic.pause(20);
         }
-        else {
-            return -1;
-        }
+
+        // If loop finishes without _responseReceived being true, it's a timeout
+        _waitingForDirection = false; // Ensure we are no longer waiting
+        // serial.writeLine("Timeout waiting for remote temp"); // Optional debug message
+        return -999; // Indicate timeout/failure
     }
 
     /**
