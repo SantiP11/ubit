@@ -425,26 +425,6 @@ namespace UBit {
                 radio.raiseEvent(4001, gesture); // Send the gesture event over radio
             });
 
-            // Register gestures and raise events locally
-            input.onGesture(Gesture.Shake, function () {
-                control.raiseEvent(3001, Gesture.Shake);
-            });
-
-            input.onGesture(Gesture.TiltLeft, function () {
-                control.raiseEvent(3001, Gesture.TiltLeft);
-            });
-
-            input.onGesture(Gesture.TiltRight, function () {
-                control.raiseEvent(3001, Gesture.TiltRight);
-            });
-
-            input.onGesture(Gesture.LogoUp, function () {
-                control.raiseEvent(3001, Gesture.LogoUp);
-            });
-
-            input.onGesture(Gesture.LogoDown, function () {
-                control.raiseEvent(3001, Gesture.LogoDown);
-            });
         });
     }
 
