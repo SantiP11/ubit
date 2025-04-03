@@ -23,16 +23,6 @@ let _responseSound: boolean = false; // Flag to indicate if a response came back
 // Stores the last received number
 let lastReceivedNumber = "";
 
-enum Sensor {
-    Temperatura,
-    Luz,
-    Sonido,
-    Aceleracion,
-    Brujula,
-    Rotacion,
-    Tiempo,
-    Fuerza_Magnetica
-}
 
 let BUFF_LEN = 50
 let I2C_TIME_INTERVAL = 500
@@ -165,22 +155,10 @@ function handleMessage(msg: string): void {
 }
 
 
-let ligFlag = false;
-let ligValue = 0;
-
-let temFlag = false;
-let temValue = 0;
-
-let souFlag = false;
-let souValue = 0;
-
-let dirFlag = false;
-let dirValue = 0;
-
 /**
  * Custom blocks
  */
-//% weight=100 color=#c845da icon="\uf29a"
+//% weight=100 color=#226F54 icon="\uf29a"
 namespace UBit {
     
     /**
